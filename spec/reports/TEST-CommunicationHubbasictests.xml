@@ -1,0 +1,17 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<testsuites>
+<testsuite name="Communication Hub basic tests" errors="0" tests="2" failures="1" time="0.512" timestamp="2014-07-02T10:04:37">
+  <testcase classname="Communication Hub basic tests" name="should successfuly register a module along with an event and a handler" time="0.004"></testcase>
+  <testcase classname="Communication Hub basic tests" name="should trigger the handler once the event is broadcasted" time="0.505"><failure type="expect" message="Expected spy fooHandler to have been called.">Error: Expected spy fooHandler to have been called.
+    at new jasmine.ExpectationResult (/home/codio/workspace/commhub/node_modules/grunt-jasmine-node/node_modules/jasmine-node/lib/jasmine-node/jasmine-1.3.1.js:114:32)
+    at null.toHaveBeenCalled (/home/codio/workspace/commhub/node_modules/grunt-jasmine-node/node_modules/jasmine-node/lib/jasmine-node/jasmine-1.3.1.js:1235:29)
+    at null.&amp;lt;anonymous&amp;gt; (/home/codio/workspace/commhub/spec/commhub.spec.js:36:47)
+    at jasmine.Block.execute (/home/codio/workspace/commhub/node_modules/grunt-jasmine-node/node_modules/jasmine-node/lib/jasmine-node/jasmine-1.3.1.js:1064:17)
+    at jasmine.Queue.next_ (/home/codio/workspace/commhub/node_modules/grunt-jasmine-node/node_modules/jasmine-node/lib/jasmine-node/jasmine-1.3.1.js:2096:31)
+    at jasmine.Queue.start (/home/codio/workspace/commhub/node_modules/grunt-jasmine-node/node_modules/jasmine-node/lib/jasmine-node/jasmine-1.3.1.js:2049:8)
+    at jasmine.Spec.execute (/home/codio/workspace/commhub/node_modules/grunt-jasmine-node/node_modules/jasmine-node/lib/jasmine-node/jasmine-1.3.1.js:2376:14)
+    at jasmine.Queue.next_ (/home/codio/workspace/commhub/node_modules/grunt-jasmine-node/node_modules/jasmine-node/lib/jasmine-node/jasmine-1.3.1.js:2096:31)
+    at onComplete (/home/codio/workspace/commhub/node_modules/grunt-jasmine-node/node_modules/jasmine-node/lib/jasmine-node/jasmine-1.3.1.js:2092:18)
+    at jasmine.Spec.finish (/home/codio/workspace/commhub/node_modules/grunt-jasmine-node/node_modules/jasmine-node/lib/jasmine-node/jasmine-1.3.1.js:2350:5)</failure></testcase>
+</testsuite>
+</testsuites>

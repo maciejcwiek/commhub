@@ -1,0 +1,17 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<testsuites>
+<testsuite name="Communication Hub basic setup test" errors="0" tests="2" failures="1" time="0.007" timestamp="2014-07-01T14:04:07">
+  <testcase classname="Communication Hub basic setup test" name="should successfuly register a module along with an event and a handler" time="0.003"></testcase>
+  <testcase classname="Communication Hub basic setup test" name="should be able to trigger a handler once the event is broadcasted" time="0.003"><failure type="expect" message="Error: jasmine.Suite() required">Error: jasmine.Suite() required
+    at new jasmine.Spec (/home/codio/workspace/commhub/node_modules/grunt-jasmine-node/node_modules/jasmine-node/lib/jasmine-node/jasmine-1.3.1.js:2213:11)
+    at jasmine.Env.it (/home/codio/workspace/commhub/node_modules/grunt-jasmine-node/node_modules/jasmine-node/lib/jasmine-node/jasmine-1.3.1.js:864:14)
+    at jasmine.Env.(anonymous function) [as it] (/home/codio/workspace/commhub/node_modules/grunt-jasmine-node/node_modules/jasmine-node/lib/jasmine-node/async-callback.js:26:50)
+    at it (/home/codio/workspace/commhub/node_modules/grunt-jasmine-node/node_modules/jasmine-node/lib/jasmine-node/index.js:85:31)
+    at null.&amp;lt;anonymous&amp;gt; (/home/codio/workspace/commhub/spec/commhub.spec.js:54:9)
+    at jasmine.Block.execute (/home/codio/workspace/commhub/node_modules/grunt-jasmine-node/node_modules/jasmine-node/lib/jasmine-node/jasmine-1.3.1.js:1064:17)
+    at jasmine.Queue.next_ (/home/codio/workspace/commhub/node_modules/grunt-jasmine-node/node_modules/jasmine-node/lib/jasmine-node/jasmine-1.3.1.js:2096:31)
+    at jasmine.Queue.start (/home/codio/workspace/commhub/node_modules/grunt-jasmine-node/node_modules/jasmine-node/lib/jasmine-node/jasmine-1.3.1.js:2049:8)
+    at jasmine.Spec.execute (/home/codio/workspace/commhub/node_modules/grunt-jasmine-node/node_modules/jasmine-node/lib/jasmine-node/jasmine-1.3.1.js:2376:14)
+    at jasmine.Queue.next_ (/home/codio/workspace/commhub/node_modules/grunt-jasmine-node/node_modules/jasmine-node/lib/jasmine-node/jasmine-1.3.1.js:2096:31)</failure></testcase>
+</testsuite>
+</testsuites>
