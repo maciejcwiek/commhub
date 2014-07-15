@@ -1,7 +1,8 @@
+require('../src/EventRouter.js');
 require('../src/CommunicationHub.js');
 
 describe("Communication Hub test.", function () {
-    var commhub = new CommunicationHub();
+    var commhub = new CommunicationHub(),
         testModuleInstance = {};
 
     function TestModule() {
@@ -19,7 +20,7 @@ describe("Communication Hub test.", function () {
     });
 
     describe("Test basic setup.", function () {
-        
+      
         it("should successfuly register a module along with an event and a handler", function () {
             spyOn(commhub, 'registerModule');
 

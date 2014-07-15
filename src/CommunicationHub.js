@@ -1,54 +1,40 @@
-(function (global, undefined) {
-    var _eventActionsMap = {},
-        EventRouter 	 = {};
-
-    EventRouter = {
-
-        /**
-         * Handles triggering appriopriate actions (functions) based on an event name the interceptor was created for.
-         * Passes through data sent along with the event. Triggers callback to the interceptor, once actions have been completed.
-         * Doesn't do anything if the event doesn't exist in the _eventActionsMap.
-         * 
-         * @method	route
-         * @param	{EventInterceptor}	interceptor
-         * @param	{*}					data
-         * @param	{Function}			callback
-         */
-        route : function (event, data, callback) {
-            try {
-                var eventAction = _eventActionsMap[event];
-            
-                eventAction.call({}, data, function (fakeData) {
-                    callback(fakeData || data);
-                });
-            } catch (err) {
-                // most likely the route was not found
-                console.log("Route not found for event:", event);
-                
-                // so just bounce the data back to the interceptor
-                callback(data);
-            }
-        },
-
-        /**
-         * Sets _eventActionsMap, which is an object containing a list of event-function pairs,
-         * where the function is the action to be triggered when the event occurs.
-         * 
-         * @method	setRoutes
-         * @param	{Object}	routes	Event:Function pairs.
-         */
-        setRoutes : function (routes) {
-            _eventActionsMap = routes;
-        }
-    };
-
-    global.EventRouter = EventRouter;
-
-}(GLOBAL || window));
-
 (function (global, EventRouter, undefined) {
 
-    var _instance = null;
+    // holds singleton
+    var _instance = null,
+        _options  = {
+            debug : true,
+            logPrefix : '[CommunicationHub]'
+        };
+
+    /**
+     * Custom logging function. Outputs logs if _options.debug is enabled.
+     * 
+     * @function
+     * @name _log
+     * @private
+     */
+    function _log() {
+        if (_options.debug) {
+            var temp = arguments;
+
+			if (typeof temp === 'object') {
+                temp = [];
+
+                for (var p in arguments) {
+                    if (arguments.hasOwnProperty(p)) {
+                        temp.push(arguments[p]);
+                	}
+                }
+            }
+
+            temp.reverse();
+            temp.push(_options.logPrefix);
+            temp.reverse();
+
+            console.log.apply(console, temp);
+        }
+    }
 
     /**
      * COMMUNICATION HUB
@@ -190,7 +176,10 @@
                     _self.module.target[handlerName].call(_self.module.target, _self.event, alteredData || data);
                 });
             } catch (err) {
-                // most likely EventRouter is not available, so just call the handler
+                // most likely EventRouter is not available
+                _log('EventRouter not found.');
+
+                // no EventRouter, so just call the handler
                 this.module.target[handlerName].call(this.module.target, this.event, data);
             }
         };
@@ -252,7 +241,7 @@
 
             module.id = id;
 
-            // go through all handlers and group module-interceptor pairs by event name
+            // go through all handlers and group interceptors by event name
             for (e in module.handlers) {
                 _events[e] = _events[e] || [];
                 _events[e].push({
