@@ -173,7 +173,7 @@
 
         /**
          * A prototype method to be called to capture an event and either call its handler,
-         * or forward it to the EventRouter and once routing is done, call a handler.
+         * or forward it to the EventRouter and call a handler once routing is done.
          * 
          * @method 	interceptEvent
          * @param	{*}	data	Data sent along with an event, to be passed to a handler.
