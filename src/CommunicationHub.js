@@ -1,4 +1,4 @@
-(function (exports, undefined) {
+(function (global, undefined) {
     var _eventActionsMap = {},
         EventRouter 	 = {};
 
@@ -42,11 +42,11 @@
         }
     };
 
-    exports.EventRouter = EventRouter;
+    global.EventRouter = EventRouter;
 
 }(GLOBAL || window));
 
-(function (exports, EventRouter, undefined) {
+(function (global, EventRouter, undefined) {
 
     var _instance = null;
 
@@ -280,7 +280,7 @@
         return _instance;
     }
 
-    // make the module available globally
-	exports.CommunicationHub = CommHub;
+    // expose to the global scope
+	global.CommunicationHub = CommHub;
 
 }(GLOBAL || window, EventRouter));
