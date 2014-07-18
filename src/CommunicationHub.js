@@ -1,7 +1,10 @@
-(function (global, EventRouter, undefined) {
+(function (global, undefined) {
 
-    // holds singleton
-    var _instance = null,
+    var _instance = {}, // a placeholder for an instance of CommunicationHub class
+        _modules  = {}, // holds a list of registered modules
+        _events   = {}, // holds references to modules and interceptors, grouped by event name
+        _router   = {},
+        _interceptorFactory = {},
         _options  = {
             debug : true,
             logPrefix : '[CommunicationHub]'
@@ -10,31 +13,165 @@
     /**
      * Custom logging function. Outputs logs if _options.debug is enabled.
      * 
-     * @function
-     * @name _log
+     * @function log
      * @private
      */
-    function _log() {
-        if (_options.debug) {
-            var temp = arguments;
+    function log() {
+        if (!_options.debug) { return; }
 
-			if (typeof temp === 'object') {
-                temp = [];
+		var temp = arguments;
 
-                for (var p in arguments) {
-                    if (arguments.hasOwnProperty(p)) {
-                        temp.push(arguments[p]);
-                	}
+		if (typeof temp === 'object') {
+            var p = null;
+	        temp = [];
+
+            for (p in arguments) {
+                if (arguments.hasOwnProperty(p)) {
+                    temp.push(arguments[p]);
                 }
             }
-
-            temp.reverse();
-            temp.push(_options.logPrefix);
-            temp.reverse();
-
-            console.log.apply(console, temp);
         }
+
+		temp.reverse();
+		temp.push(_options.logPrefix);
+	    temp.reverse();
+
+		console.log.apply(console, temp);
     }
+    
+    /**
+	 * Returns a unique id generated on a basis of current time stamp + random number and prepended with a custom or default prefix.
+	 * 
+	 * @function generateUID
+	 * @param	{Srting} prefix		A string the ID is to be prefixed with. Default: 'uid_'
+	 * @private
+	 * @returns	{String}
+	 */
+    function generateUID(prefix) {
+        prefix = prefix || 'uid_';
+        return prefix + '' + (new Date()).getTime() + '' + parseInt(Math.random() * 1000, 0);
+    }
+    
+    /**
+     * A utility function, checking whether the object is an instance of EventRouter class.
+     * 
+     * @function isRouter
+     * @param 	{Object}
+     * @private
+     * @returns {Boolean}
+     */
+    function isRouter(obj) {
+        return ( (obj instanceof EventRouter) || (obj && obj.constructor && obj.constructor.name === 'EventRouter') );
+    }
+
+    /**
+	 * EventInterceptor constructor.
+	 * Interceptors are created in the format interceptor-per-event and they handle one event and one event handler.
+	 * 
+	 * @class EventInterceptor
+	 * @param	{String} 	event		Name of the event to intercept.
+	 * @param	{Function} 	handler		Event handler.
+	 * @private
+	 */
+    function EventInterceptor(module, event) {
+        this.id 	= generateUID('eiid_');
+        this.event 	= event;
+        this.module	= module;
+    }
+
+    /**
+	 * A prototype method to be called to capture an event and either call its handler,
+	 * or forward it to the EventRouter and call a handler once routing is done.
+	 * 
+	 * @method 	interceptEvent
+	 * @param	{*}	data	Data sent along with an event, to be passed to a handler.
+	 */
+    EventInterceptor.prototype.interceptEvent = function (data) {
+        data = data || false;
+
+        var _self 		= this,
+            handlerName = this.module.handlers[this.event];
+
+        try {
+            log('Trying to route event:', this.event, '[module: ' + this.module.id + ']');
+
+            // use EventRouter to trigger actions assigned to the event. Once that's done, trigger the event handler.
+            _router.route(this.event, data, function (alteredData) {
+                _self.module.target[handlerName].call(_self.module.target, _self.event, alteredData || data);
+            });
+        } catch (err) {
+            // most likely EventRouter is not available
+            log('EventRouter not found. Triggering handler for event:', this.event, '[module: ' + this.module.id + ']');
+
+            // no EventRouter, so just call the handler
+            this.module.target[handlerName].call(this.module.target, this.event, data);
+        }
+    };
+    
+    /**
+	 * A factory to facilitate creating new interceptors and triggering events on them.
+	 * 
+	 * @mixin _interceptorFactory
+	 */
+    _interceptorFactory = {
+
+        /**
+         * Holds a list of all event interceptors. To be accessed from within the factory only.
+         * 
+         * @type {Object}
+         * @name _interceptors
+         */
+        _interceptors : {},
+
+        /**
+         * Instantiates a new EventInterceptor and saves the instance in an array of interceptors associated with the same event.
+         * 
+         * @method	create
+         * @param	{String}	e			Event name.
+         * @param	{Function} 	listener	Event listener.
+         * @returns {EventInterceptor}
+         */
+        create : function (e, module) {
+            this._interceptors[e] = this._interceptors[e] || [];
+            this._interceptors[e].push(new EventInterceptor(module, e));
+
+            log('Succesfully created EventInterceptor for event:', e, '[module: ' + module.id + ']');
+
+            return this._interceptors[e][this._interceptors[e].length - 1];
+        },
+
+        /**
+         * Finds an array of event interceptors assigned to the event and triggers iterceptEvent method
+         * of all the interceptors from the array.
+         * 
+         * @method	invokeInterceptor
+         * @param	{String}	e		Event name.
+         * @param	{*}			data	Data to be passed through to recipients.
+         */
+        invokeInterceptor : function (e, data) {
+            var i = -1,
+                eventInterceptors = this._interceptors[e] || [];
+
+            while (eventInterceptors[++i]) {
+                eventInterceptors[i].interceptEvent(data);
+            }
+        },
+
+        /**
+         * Removes all interceptors.
+         * 
+         * @method removeAllInterceptors
+         */
+        removeAllInterceptors : function () {
+            var p = null;
+
+            for (p in this._interceptors) {
+                if (this._interceptors.hasOwnProperty(p)) {
+                    delete this._interceptors[p];
+                }
+            }
+        }
+    };
 
     /**
      * COMMUNICATION HUB
@@ -55,8 +192,7 @@
      * 						executes an event handler of a recipient
      * 6. ModuleA	-->		responds to the "jump" event
      * 
-     * ## <HOW-TO> ##
-     * 		
+     * @example
      * 		var CommHub = new CommunicationHub();
      * 
      * 		function MyModule() {
@@ -78,14 +214,13 @@
      * 
      * 		// the log output from the listener will be: event: "jump", animal: "rabbit", name: "Roger"
      * 
-     * ## </HOW-TO> ##
+     * @example
+     * 		// using EventRouter
      * 
+     * 		var Router	= new EventRouter()
+     * 			CommHub = new CommunicationHub({router: Router});
      * 
-     * ## <HOW-TO using EventRouter> ##
-     * 		
-     * 		var CommHub = new CommunicationHub();
-     * 
-     * 		EventRouter.setRoutes({
+     * 		Router.setRoutes({
      * 			"jump" : function (data, done) {
      * 				// here you can do with passed data whatever you want
      * 				// e.g. Assume we have DB class with save method which returns boolean.
@@ -117,159 +252,84 @@
      * 
      * 		// the log output from the listener will be: event: "jump", animal: "mouse", name: "Mickey", saved: true
      * 
-     * ## </HOW-TO> ##
-     * 
-     * @module
-     * @name 	CommunicationHub
+     * @class	CommunicationHub
      */
-	function CommunicationHub() {
+	function CommunicationHub(options) {
+        options = options || {};
 
-        var _modules 			= {}, // holds a list of registered modules
-            _events 			= {}, // holds references to modules and interceptors, grouped by event name
-            _interceptors 		= {}, // holds a list of all event interceptors
-            _interceptorFactory = {}; // a placeholder for the interceptor factory
-
-        /**
-         * Returns a unique id generated on a basis of current time stamp + random number and prepended with a custom or default prefix.
-         * 
-         * @method 	generateUID
-         * @param	{Srting} prefix		A string the ID is to be prefixed with. Default: 'uid_'
-         * @private
-         * @returns	{String}
-         */
-        function generateUID(prefix) {
-            prefix = prefix || 'uid_';
-            return prefix + '' + (new Date()).getTime() + '' + parseInt(Math.random() * 1000, 0);
-        }
-
-        /**
-         * EventInterceptor constructor.
-         * Interceptors are created in the format interceptor-per-event and they handle one event and one event handler.
-         * 
-         * @method	EventInterceptor
-         * @param	{String} 	event		Name of the event to intercept.
-         * @param	{Function} 	handler		Event handler.
-         * @private
-         */
-        function EventInterceptor(module, event) {
-            this.id 	= generateUID('eiid_');
-            this.event 	= event;
-            this.module	= module;
-        }
-
-        /**
-         * A prototype method to be called to capture an event and either call its handler,
-         * or forward it to the EventRouter and call a handler once routing is done.
-         * 
-         * @method 	interceptEvent
-         * @param	{*}	data	Data sent along with an event, to be passed to a handler.
-         */
-        EventInterceptor.prototype.interceptEvent = function (data) {
-            data = data || false;
-
-            var _self 		= this,
-                handlerName = this.module.handlers[this.event];
-
-            try {
-                // use EventRouter to trigger actions assigned to the event. Once that's done, trigger the event handler.
-                EventRouter.route(this.event, data, function (alteredData) {
-                    _self.module.target[handlerName].call(_self.module.target, _self.event, alteredData || data);
-                });
-            } catch (err) {
-                // most likely EventRouter is not available
-                _log('EventRouter not found.');
-
-                // no EventRouter, so just call the handler
-                this.module.target[handlerName].call(this.module.target, this.event, data);
-            }
-        };
-
-        /**
-         * A factory to facilitate creating new interceptors and triggering events on them.
-         * 
-         * @name _interceptorFactory
-         * @type {Object}
-         */
-        _interceptorFactory = {
-
-            /**
-             * Instantiates a new EventInterceptor and saves the instance in an array of interceptors associated with the same event.
-             * 
-             * @method	create
-             * @param	{String}	e			Event name.
-             * @param	{Function} 	listener	Event listener.
-             * @returns {EventInterceptor}
-             */
-            create : function (e, module) {
-                _interceptors[e] = _interceptors[e] || [];
-                _interceptors[e].push(new EventInterceptor(module, e));
-
-                return _interceptors[e][_interceptors[e].length - 1];
-            },
-
-           	/**
-           	 * Finds an array of event interceptors assigned to the event and triggers iterceptEvent method
-           	 * of all the interceptors from the array.
-           	 * 
-           	 * @method	triggerEvent
-           	 * @param	{String}	e		Event name.
-           	 * @param	{*}			data	Data to be passed through to recipients.
-           	 * @private
-           	 */
-            triggerEvent : function (e, data) {
-                var i = -1,
-                    eventInterceptors = _interceptors[e] || [];
-
-                while (eventInterceptors[++i]) {
-                    eventInterceptors[i].interceptEvent(data);
-                }
-            }
-        };
-
-        /**
-         * Registers a module listening on events passed through as parameters.
-         * 
-         * @method	registerModule
-         * @param	{Object}	params	Expected parameters:
-         * 								- target	A reference to the module.
-         * 								- listeners	An object containing event name{String}-handler{Function} pairs (e.g. { "myEvent" : myEventHandler })
-         */
-        this.registerModule = function (params) {
-            var id 		= generateUID('mid_'),
-                module 	= _modules[id] = params,
+        _options.debug = (typeof options.verbose === 'boolean') ? options.verbose : false;
+        _router = isRouter(options.router) ? options.router : {};
+    }
+    
+    /**
+     * Registers a module listening on events passed through as parameters.
+     * 
+     * @method	registerModule
+     * @param	{Object}	params	Expected parameters:
+     * 								- target	A reference to the module.
+     * 								- listeners	An object containing event name{String}-handler{Function} pairs (e.g. { "myEvent" : myEventHandler })
+     */
+    CommunicationHub.prototype.registerModule = function (params) {
+        var id 		= generateUID('mid_'),
+            module 	= _modules[id] = params,
                 e 		= null;
 
-            module.id = id;
+        module.id = id;
 
-            // go through all handlers and group interceptors by event name
-            for (e in module.handlers) {
-                _events[e] = _events[e] || [];
-                _events[e].push({
-                    module_id 		: id,
-                    interceptor_id	: _interceptorFactory.create(e, module).id
-                });
-            }
-        };
+        // go through all handlers and group interceptors by event name
+        for (e in module.handlers) {
+            _events[e] = _events[e] || [];
+            _events[e].push({
+                module_id 		: id,
+                interceptor_id	: _interceptorFactory.create(e, module).id
+            });
+        }
+    };
 
-        /**
-         * An alias to _interceptorFactory.triggerEvent.
-         * 
-         * @method	emit
-         * @param	{String}	e 		Event name.
-         * @param	{*}			data	Data to be passed through to event hadlers/recipients.
-         */
-        this.emit = function (e, data) {
-            _interceptorFactory.triggerEvent(e, data);
-        };
-    }
+    /**
+     * An alias to _interceptorFactory.triggerEvent.
+     * 
+     * @method	emit
+     * @param	{String}	e 		Event name.
+     * @param	{*}			data	Data to be passed through to event hadlers/recipients.
+     */
+    CommunicationHub.prototype.emit = function (e, data) {
+        _interceptorFactory.invokeInterceptor(e, data);
+    };
+
+    /**
+     * Assigns a router to the hub.
+     * 
+     * @method	assignRouter
+     * @param	{Object}	router	An instance of EventRouter class.
+     */
+    CommunicationHub.prototype.assignRouter = function (router) {
+        if (isRouter(router)) {
+            _router = router;
+        } else {
+            throw ('Argument is not an instance of EventRouter class.');
+        }
+    };
+    
+    /**
+     * Resets the hub to it's initial state.
+     * 
+     * @method	reset
+     */
+    CommunicationHub.prototype.reset = function () {
+        _modules = {};
+        _events = {};
+        _router = {};
+        _interceptorFactory.removeAllInterceptors();
+    };
 
     // ensures singleton; to be published as CommunicationHub
-    function CommHub() {
-        _instance = _instance instanceof CommunicationHub ? _instance : new CommunicationHub(arguments); 
+    function CommHub(opts) {
+        _instance = _instance instanceof CommunicationHub ? _instance : new CommunicationHub(opts); 
         return _instance;
     }
 
-    // expose to the global scope
+    // expose the instance to the global scope
 	global.CommunicationHub = CommHub;
 
-}(GLOBAL || window, EventRouter));
+}(GLOBAL || window));
