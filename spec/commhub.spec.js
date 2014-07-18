@@ -1,13 +1,20 @@
+require('../src/EventRouter.js');
 require('../src/CommunicationHub.js');
 
 describe("Communication Hub test.", function () {
-    var commhub = new CommunicationHub();
+    var _testCounter = 0,
+    	router  = new EventRouter({verbose : true}),
+        commhub = new CommunicationHub({eventRouter : router, verbose : true}),
         testModuleInstance = {};
 
     function TestModule() {
         function Module() {}
         
-        Module.eventHandler = function () {
+        Module.eventHandlerOne = function () {
+            return;
+        };
+        
+        Module.eventHandlerTwo = function () {
             return;
         };
 
@@ -15,22 +22,26 @@ describe("Communication Hub test.", function () {
     }
     
     beforeEach(function () {
+        console.log('>>> TEST #' + (++_testCounter).toString());
+
         testModuleInstance = new TestModule();
+        commhub.reset();
+        commhub.useRouter(router);
     });
 
     describe("Test basic setup.", function () {
-        
+      
         it("should successfuly register a module along with an event and a handler", function () {
-            spyOn(commhub, 'registerModule');
+            var spy = spyOn(commhub, 'registerModule');
 
             commhub.registerModule({
                 target: testModuleInstance,
-                handlers: {'foo': 'eventHandler'}
+                handlers: {'foo': 'eventHandlerOne'}
             });
 
-            expect(commhub.registerModule).toHaveBeenCalledWith({
+            expect(spy).toHaveBeenCalledWith({
                 target: testModuleInstance,
-                handlers: {'foo': 'eventHandler'}
+                handlers: {'foo': 'eventHandlerOne'}
             });
         });
     });
@@ -38,11 +49,11 @@ describe("Communication Hub test.", function () {
     describe("Test event triggering, passing data between modules and event routing.", function () {
 
         it("should trigger a handler once an event is broadcasted", function () {
-            var spy = spyOn(testModuleInstance, 'eventHandler');
+            var spy = spyOn(testModuleInstance, 'eventHandlerOne');
 
             commhub.registerModule({
                 target: testModuleInstance,
-                handlers: {'bar': 'eventHandler'}
+                handlers: {'bar': 'eventHandlerOne'}
             });
 
             commhub.emit('bar');
@@ -51,23 +62,20 @@ describe("Communication Hub test.", function () {
         });
 
         it("should pass on an event name and data, sent along with triggered event, to a handler", function () {
-            var spy = spyOn(testModuleInstance, 'eventHandler');
+            var spy = spyOn(testModuleInstance, 'eventHandlerOne');
 
             commhub.registerModule({
                 target: testModuleInstance,
-                handlers: {'bar': 'eventHandler'}
+                handlers: {'bar': 'eventHandlerOne'}
             });
 
             commhub.emit('bar', {foo: true, baz: false});
 
-            expect(spy).toHaveBeenCalledWith('bar', {
-                foo: true,
-                baz: false
-            });
+            expect(spy).toHaveBeenCalledWith('bar', {foo: true, baz: false});
         });
         
-        it("should route an event to process associated data invisibly, and pass everything on to a handler", function () {
-            var spy = spyOn(testModuleInstance, 'eventHandler'),
+        it("should route an event to process associated data invisibly, and forward everything on to a handler", function () {
+            var spy = spyOn(testModuleInstance, 'eventHandlerOne'),
             	testRoute = {
                     routeForFooEvent: function (data, done) {
                         done();
@@ -76,10 +84,10 @@ describe("Communication Hub test.", function () {
 
             commhub.registerModule({
                 target: testModuleInstance,
-                handlers: {'foo': 'eventHandler'}
+                handlers: {'foo': 'eventHandlerOne'}
             });
             
-            EventRouter.setRoutes({
+            router.setRoutes({
                 'foo' : testRoute.routeForFooEvent
             });
 
@@ -88,8 +96,8 @@ describe("Communication Hub test.", function () {
             expect(spy).toHaveBeenCalledWith('foo', {foo: true, bar: false});
         });
         
-        it("should route an event to process associated data and respond back to a handler with modified data", function () {
-            var spy = spyOn(testModuleInstance, 'eventHandler'),
+        it("should route an event to process associated data and forward the event along with modified data, to a handler", function () {
+            var spy = spyOn(testModuleInstance, 'eventHandlerOne'),
             	testRoute = {
                     routeForFooEventWithFakeResponse: function (data, done) {
                         done('fake data');
@@ -98,33 +106,64 @@ describe("Communication Hub test.", function () {
 
             commhub.registerModule({
                 target: testModuleInstance,
-                handlers: {'foo': 'eventHandler'}
+                handlers: {'foo': 'eventHandlerOne'}
             });
             
-            EventRouter.setRoutes({
+            router.setRoutes({
                 'foo' : testRoute.routeForFooEventWithFakeResponse
             });
-            
+
             commhub.emit('foo', {foo: true, bar: false});
 
             expect(spy).toHaveBeenCalledWith('foo', 'fake data');
         });
 
         it("should not route an event, if there is no modules registered in the CommunicationHub, for that event", function () {
-            var spy = spyOn(testModuleInstance, 'eventHandler'),
+            var spy = spyOn(testModuleInstance, 'eventHandlerOne'),
             	testRoute = {
                     routeForBarEvent: function (data, done) {
                         done();
                     }
                 };
 
-            EventRouter.setRoutes({
+            router.setRoutes({
                 'bar' : testRoute.routeForBarEvent
             });
 
-            commhub.emit('bar', {foo: true, bar: false});
+            commhub.emit('bar');
 
             expect(spy).not.toHaveBeenCalled();
+        });
+        
+        it("should not route an event, if routing for that event has been switched off", function () {
+            var testRoute = {
+                    routeForFooEvent: function (data, done) {
+                        done();
+                    },
+                    routeForBarEvent: function (data, done) {
+                        done();
+                    }
+                },
+                spyOne = spyOn(testRoute, 'routeForFooEvent'),
+                spyTwo = spyOn(testRoute, 'routeForBarEvent');
+
+            commhub.registerModule({
+                target: testModuleInstance,
+                handlers: {'foo': 'eventHandlerOne', 'bar': 'eventHandlerTwo'}
+            });
+
+            router.setRoutes({
+                'foo' : testRoute.routeForFooEvent,
+                'bar' : testRoute.routeForBarEvent
+            });
+
+            router.toggleRoute('bar', false);
+            
+            commhub.emit('foo');
+            commhub.emit('bar');
+
+            expect(spyOne).toHaveBeenCalled();
+            expect(spyTwo).not.toHaveBeenCalled();
         });
     });
 });

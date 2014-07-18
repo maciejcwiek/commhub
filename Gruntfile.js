@@ -73,7 +73,7 @@ module.exports = function(grunt) {
     grunt.loadNpmTasks('grunt-contrib-watch');
     
     // load jsdoc documenting plugin
-    grunt.loadNpmTasks('grunt-jsdoc');
+    // grunt.loadNpmTasks('grunt-jsdoc');
 
     // Default task(s).
 	grunt.registerTask('default', ['jshint', 'jasmine_node', 'uglify']);
