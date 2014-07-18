@@ -1,8 +1,8 @@
 (function (global, undefined) {
 
-    var _instance 		 = {},
-    	_eventActionsMap = {},
-        _options 		 = {
+    var _instance        = {},
+        _eventActionsMap = {},
+        _options         = {
             debug : true,
             logPrefix : '[EventRouter]'
         };
@@ -16,11 +16,11 @@
     function log() {
         if (!_options.debug) { return; }
 
-		var temp = arguments;
+        var temp = arguments;
 
-		if (typeof temp === 'object') {
-	        var p = null;
-	        temp = [];
+        if (typeof temp === 'object') {
+            var p = null;
+            temp = [];
 
             for (p in arguments) {
                 if (arguments.hasOwnProperty(p)) {
@@ -29,11 +29,11 @@
             }
         }
 
-		temp.reverse();
-		temp.push(_options.logPrefix);
-	    temp.reverse();
+        temp.reverse();
+        temp.push(_options.logPrefix);
+        temp.reverse();
 
-		console.log.apply(console, temp);
+        console.log.apply(console, temp);
     }
 
     /**
@@ -50,23 +50,23 @@
      * Sets _eventActionsMap, which is an object containing a list of event-function pairs,
      * where the function is the action to be triggered when the event occurs.
      * 
-     * @method	setRoutes
-     * @param	{Object}	routes	Event{String}:Function Name{String} pairs.
+     * @method  setRoutes
+     * @param   {Object}    routes  Event{String}:Function Name{String} pairs.
      */
     EventRouter.prototype.setRoutes = function (routes) {
         _eventActionsMap = routes;
     };
 
     /**
-	 * Handles triggering appriopriate actions (functions) based on an event name the interceptor was created for.
-	 * Passes through data sent along with the event. Triggers callback to the interceptor, once actions have been completed.
-	 * Doesn't do anything if the event doesn't exist in the _eventActionsMap.
-	 * 
-	 * @method	route
-	 * @param	{EventInterceptor}	interceptor
-	 * @param	{*}					data
-	 * @param	{Function}			callback
-	 */
+     * Handles triggering appriopriate actions (functions) based on an event name the interceptor was created for.
+     * Passes through data sent along with the event. Triggers callback to the interceptor, once actions have been completed.
+     * Doesn't do anything if the event doesn't exist in the _eventActionsMap.
+     * 
+     * @method  route
+     * @param   {EventInterceptor}  interceptor
+     * @param   {*}                 data
+     * @param   {Function}          callback
+     */
     EventRouter.prototype.route = function (event, data, callback) {
         try {
             var eventAction = _eventActionsMap[event];
