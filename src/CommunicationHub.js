@@ -3,10 +3,10 @@
     var _instance = {}, // a placeholder for an instance of CommunicationHub class
         _modules  = {}, // holds a list of registered modules
         _events   = {}, // holds references to modules and interceptors, grouped by event name
-        _router   = {},
+        _router   = {}, // assigned EventRouter instance
         _interceptorFactory = {},
         _options  = {
-            debug : true,
+            debug : false,
             logPrefix : '[CommunicationHub]'
         };
 
@@ -93,7 +93,7 @@
             handlerName = this.module.handlers[this.event];
 
         try {
-            log('Trying to route event:', this.event, '[module: ' + this.module.id + ']');
+            log('Attempting to route event:', this.event, '[module: ' + this.module.id + ']');
 
             // use EventRouter to trigger actions assigned to the event. Once that's done, trigger the event handler.
             _router.route(this.event, data, function (alteredData) {
@@ -101,7 +101,7 @@
             });
         } catch (err) {
             // most likely EventRouter is not available
-            log('EventRouter not found. Triggering handler for event:', this.event, '[module: ' + this.module.id + ']');
+            log('EventRouter not found. Triggering handler for event:', this.event, '[module: ' + this.module.id + ']', err.message);
 
             // no EventRouter, so just call the handler
             this.module.target[handlerName].call(this.module.target, this.event, data);
@@ -135,7 +135,7 @@
             this._interceptors[e] = this._interceptors[e] || [];
             this._interceptors[e].push(new EventInterceptor(module, e));
 
-            log('Succesfully created EventInterceptor for event:', e, '[module: ' + module.id + ']');
+            log('Successfully created EventInterceptor for event:', e, '[module: ' + module.id + ']');
 
             return this._interceptors[e][this._interceptors[e].length - 1];
         },
@@ -258,7 +258,8 @@
         options = options || {};
 
         _options.debug = (typeof options.verbose === 'boolean') ? options.verbose : false;
-        _router = isRouter(options.router) ? options.router : {};
+
+        _router = isRouter(options.eventRouter) ? options.eventRouter : {};
     }
     
     /**
@@ -272,7 +273,7 @@
     CommunicationHub.prototype.registerModule = function (params) {
         var id      = generateUID('mid_'),
             module  = _modules[id] = params,
-                e       = null;
+            e   	= null;
 
         module.id = id;
 
@@ -303,7 +304,7 @@
      * @method  assignRouter
      * @param   {Object}    router  An instance of EventRouter class.
      */
-    CommunicationHub.prototype.assignRouter = function (router) {
+    CommunicationHub.prototype.useRouter = function (router) {
         if (isRouter(router)) {
             _router = router;
         } else {

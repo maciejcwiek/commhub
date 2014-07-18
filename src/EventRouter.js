@@ -3,7 +3,7 @@
     var _instance        = {},
         _eventActionsMap = {},
         _options         = {
-            debug : true,
+            debug : false,
             logPrefix : '[EventRouter]'
         };
 
@@ -71,16 +71,36 @@
         try {
             var eventAction = _eventActionsMap[event];
 
+            if (eventAction.disabled) {
+                log("Routing disabled for event:", event);
+                return;
+            }
+            
             eventAction.call({}, data, function (fakeData) {
                 callback(fakeData || data);
                 log("Routing done for event:", event);
             });
         } catch (err) {
             // most likely the route was not found
-            log("Route not found for event:", event);
+            log("Route not found for event:", event, "- invoking handler directly.");
 
             // so just bounce the data back to the interceptor
             callback(data);
+        }
+    };
+
+    /**
+     * Gives the ability to turn off/on routing for a particular event.
+     * 
+     * @method	toggleRoute
+     * @param	{String}	event	Event name.
+     * @param	{Boolean}	enable	A flag to enable/disable routing.
+     */
+    EventRouter.prototype.toggleRoute = function (event, enable) {
+        try {
+        	_eventActionsMap[event].disabled = !enable;
+        } catch (err) {
+            log("Can't disable routing for event:", event, "- do routes defined.");
         }
     };
 
