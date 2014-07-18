@@ -152,6 +152,11 @@
             var i = -1,
                 eventInterceptors = this._interceptors[e] || [];
 
+            if (!this._interceptors[e]) {
+                log("No event interceptors found for event:", e);
+                return;
+            }
+            
             while (eventInterceptors[++i]) {
                 eventInterceptors[i].interceptEvent(data);
             }

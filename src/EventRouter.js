@@ -97,10 +97,12 @@
      * @param	{Boolean}	enable	A flag to enable/disable routing.
      */
     EventRouter.prototype.toggleRoute = function (event, enable) {
+        enable = (typeof enable === 'boolean') ? enable : true;
+
         try {
         	_eventActionsMap[event].disabled = !enable;
         } catch (err) {
-            log("Can't disable routing for event:", event, "- do routes defined.");
+            throw ("Can't disable routing for event: " + event + " - no routes defined.");
         }
     };
 
