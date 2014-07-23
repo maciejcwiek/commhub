@@ -4,7 +4,6 @@
         _modules  = {}, // holds a list of registered modules
         _events   = {}, // holds references to modules and interceptors, grouped by event name
         _router   = {}, // assigned EventRouter instance
-        _interceptorFactory = {},
         _options  = {
             debug : false,
             logPrefix : '[CommunicationHub]'
@@ -111,9 +110,9 @@
     /**
      * A factory to facilitate creating new interceptors and triggering events on them.
      * 
-     * @mixin _interceptorFactory
+     * @mixin interceptorFactory
      */
-    _interceptorFactory = {
+    var interceptorFactory = {
 
         /**
          * Holds a list of all event interceptors. To be accessed from within the factory only.
@@ -144,11 +143,11 @@
          * Finds an array of event interceptors assigned to the event and triggers iterceptEvent method
          * of all the interceptors from the array.
          * 
-         * @method  invokeInterceptor
+         * @method  invokeInterceptorss
          * @param   {String}    e       Event name.
          * @param   {*}         data    Data to be passed through to recipients.
          */
-        invokeInterceptor : function (e, data) {
+        invokeInterceptors : function (e, data) {
             var i = -1,
                 eventInterceptors = this._interceptors[e] || [];
 
@@ -278,7 +277,7 @@
     CommunicationHub.prototype.registerModule = function (params) {
         var id      = generateUID('mid_'),
             module  = _modules[id] = params,
-            e   	= null;
+            e       = null;
 
         module.id = id;
 
@@ -287,26 +286,26 @@
             _events[e] = _events[e] || [];
             _events[e].push({
                 module_id       : id,
-                interceptor_id  : _interceptorFactory.create(e, module).id
+                interceptor_id  : interceptorFactory.create(e, module).id
             });
         }
     };
 
     /**
-     * An alias to _interceptorFactory.triggerEvent.
+     * An alias to interceptorFactory.triggerEvent.
      * 
      * @method  emit
      * @param   {String}    e       Event name.
      * @param   {*}         data    Data to be passed through to event hadlers/recipients.
      */
     CommunicationHub.prototype.emit = function (e, data) {
-        _interceptorFactory.invokeInterceptor(e, data);
+        interceptorFactory.invokeInterceptors(e, data);
     };
 
     /**
      * Assigns a router to the hub.
      * 
-     * @method  assignRouter
+     * @method  useRouter
      * @param   {Object}    router  An instance of EventRouter class.
      */
     CommunicationHub.prototype.useRouter = function (router) {
@@ -326,10 +325,10 @@
         _modules = {};
         _events = {};
         _router = {};
-        _interceptorFactory.removeAllInterceptors();
+        interceptorFactory.removeAllInterceptors();
     };
 
-    // ensures singleton; to be published as CommunicationHub
+    // ensures singleton; to be published as CommunicationHub - DO WE NEED A SINGLETON??
     function CommHub(opts) {
         _instance = _instance instanceof CommunicationHub ? _instance : new CommunicationHub(opts); 
         return _instance;
