@@ -71,13 +71,18 @@
         try {
             var eventAction = _eventActionsMap[event];
 
-            if (eventAction.disabled) {
-                log("Routing disabled for event:", event);
+            if (eventAction && eventAction.disabled) {
+                // routing for this particular event has been switched off
+                log("Routing disabled for event:", event, "- invoking handler directly.");
+
+                // so just bounce the data back to the interceptor
+            	callback(data);
+
                 return;
             }
-            
-            eventAction.call({}, data, function (fakeData) {
-                callback(fakeData || data);
+
+            eventAction.call({}, data, function (alteredData) {
+            	callback(alteredData || data);
                 log("Routing done for event:", event);
             });
         } catch (err) {
@@ -97,14 +102,25 @@
      * @param	{Boolean}	enable	A flag to enable/disable routing.
      */
     EventRouter.prototype.toggleRoute = function (event, enable) {
+        enable = (typeof enable === 'boolean') ? enable : true;
+
         try {
         	_eventActionsMap[event].disabled = !enable;
         } catch (err) {
-            log("Can't disable routing for event:", event, "- do routes defined.");
+            throw ("Can't disable routing for event: " + event + " - no routes defined.");
         }
     };
 
-    // ensures singleton; to be published as EventRouter
+    /**
+     * Clears all routes.
+     * 
+     * @method reset
+     */
+    EventRouter.prototype.reset = function () {
+        _eventActionsMap = {};
+    };
+
+    // ensures singleton; to be published as EventRouter - DO WE NEED A SINGLETON??
     function Router(opts) {
         _instance = _instance instanceof EventRouter ? _instance : new EventRouter(opts);
         return _instance;
