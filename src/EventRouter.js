@@ -105,9 +105,9 @@
         enable = (typeof enable === 'boolean') ? enable : true;
 
         try {
-        	_eventActionsMap[event].disabled = !enable;
+            _eventActionsMap[event].disabled = !enable;
         } catch (err) {
-            throw ("Can't disable routing for event: " + event + " - no routes defined.");
+            throw ("Can't disable routing for event: " + event + " - no route defined for this event.");
         }
     };
 
@@ -129,4 +129,4 @@
     // expose the instance to the global scope
     global.EventRouter = Router;
 
-}(GLOBAL || window));
+}(GLOBAL));

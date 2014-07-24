@@ -4,8 +4,8 @@ require('../src/CommunicationHub.js');
 describe("Communication Hub test.", function () {
     var _testCounter = 0,
         _verbose = true,
-    	router  = new EventRouter({verbose : _verbose}),
-        commhub = new CommunicationHub({eventRouter : router, verbose : _verbose}),
+    	router = new EventRouter({verbose : _verbose}),
+        commhub = new CommunicationHub({verbose : _verbose}),
         testModuleInstance = {},
         testRoutes = {};
 

@@ -88,7 +88,7 @@
     EventInterceptor.prototype.interceptEvent = function (data) {
         data = data || false;
 
-        var _self       = this,
+        var self        = this,
             handlerName = this.module.handlers[this.event];
 
         try {
@@ -96,7 +96,7 @@
 
             // use EventRouter to trigger actions assigned to the event. Once that's done, trigger the event handler.
             _router.route(this.event, data, function (alteredData) {
-                _self.module.target[handlerName].call(_self.module.target, _self.event, alteredData || data);
+                self.module.target[handlerName].call(self.module.target, self.event, alteredData || data);
             });
         } catch (err) {
             // most likely EventRouter is not available
@@ -143,7 +143,7 @@
          * Finds an array of event interceptors assigned to the event and triggers iterceptEvent method
          * of all the interceptors from the array.
          * 
-         * @method  invokeInterceptorss
+         * @method  invokeInterceptors
          * @param   {String}    e       Event name.
          * @param   {*}         data    Data to be passed through to recipients.
          */
@@ -263,7 +263,9 @@
 
         _options.debug = (typeof options.verbose === 'boolean') ? options.verbose : false;
 
-        _router = isRouter(options.eventRouter) ? options.eventRouter : {};
+        if (options.eventRouter) {
+            this.useRouter(options.eventRouter);
+        }
     }
     
     /**
@@ -281,7 +283,7 @@
 
         module.id = id;
 
-        // go through all handlers and group interceptors by event name
+        // go through all handlers, create event interceptors and group them by event name
         for (e in module.handlers) {
             _events[e] = _events[e] || [];
             _events[e].push({
@@ -337,4 +339,4 @@
     // expose the instance to the global scope
     global.CommunicationHub = CommHub;
 
-}(GLOBAL || window));
+}(GLOBAL));
