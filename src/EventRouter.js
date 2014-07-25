@@ -54,7 +54,7 @@
      * @param   {Object}    routes  Event{String}:Function Name{String} pairs.
      */
     EventRouter.prototype.setRoutes = function (routes) {
-        _eventActionsMap = routes;
+        _eventActionsMap = routes || {};
     };
 
     /**
