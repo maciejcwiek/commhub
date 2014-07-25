@@ -16,24 +16,24 @@
     function log() {
         if (!_options.debug) { return; }
 
-        var temp = arguments;
+        var args = arguments;
 
-        if (typeof temp === 'object') {
+        if (typeof args === 'object') {
             var p = null;
-            temp = [];
+            args = [];
 
             for (p in arguments) {
                 if (arguments.hasOwnProperty(p)) {
-                    temp.push(arguments[p]);
+                    args.push(arguments[p]);
                 }
             }
         }
 
-        temp.reverse();
-        temp.push(_options.logPrefix);
-        temp.reverse();
+        args.reverse();
+        args.push(_options.logPrefix);
+        args.reverse();
 
-        console.log.apply(console, temp);
+        console.log.apply(console, args);
     }
 
     /**

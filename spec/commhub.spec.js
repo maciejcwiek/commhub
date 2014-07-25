@@ -154,5 +154,23 @@ describe("Communication Hub test.", function () {
             expect(spyHandler).toHaveBeenCalled();
             expect(spyOne).not.toHaveBeenCalled();
         });
+
+        it("should not invoke handlers when a module has been deregistered by event name", function () {
+            commhub.registerModule({
+                target   : testModuleInstance,
+                handlers : {'foo': 'eventHandlerOne', 'bar': 'eventHandlerTwo'}
+            });
+
+            commhub.deregisterModule({
+                target : testModuleInstance,
+                events : ['foo']
+            });
+
+            spyOn(testModuleInstance, 'eventHandlerOne');
+
+            commhub.emit('foo');
+
+            expect(testModuleInstance.eventHandlerOne).not.toHaveBeenCalled();
+        });
     });
 });
