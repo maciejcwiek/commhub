@@ -16,24 +16,24 @@
     function log() {
         if (!_options.debug) { return; }
 
-        var temp = arguments;
+        var args = arguments;
 
-        if (typeof temp === 'object') {
+        if (typeof args === 'object') {
             var p = null;
-            temp = [];
+            args = [];
 
             for (p in arguments) {
                 if (arguments.hasOwnProperty(p)) {
-                    temp.push(arguments[p]);
+                    args.push(arguments[p]);
                 }
             }
         }
 
-        temp.reverse();
-        temp.push(_options.logPrefix);
-        temp.reverse();
+        args.reverse();
+        args.push(_options.logPrefix);
+        args.reverse();
 
-        console.log.apply(console, temp);
+        console.log.apply(console, args);
     }
 
     /**
@@ -54,7 +54,7 @@
      * @param   {Object}    routes  Event{String}:Function Name{String} pairs.
      */
     EventRouter.prototype.setRoutes = function (routes) {
-        _eventActionsMap = routes;
+        _eventActionsMap = routes || {};
     };
 
     /**
@@ -105,9 +105,9 @@
         enable = (typeof enable === 'boolean') ? enable : true;
 
         try {
-        	_eventActionsMap[event].disabled = !enable;
+            _eventActionsMap[event].disabled = !enable;
         } catch (err) {
-            throw ("Can't disable routing for event: " + event + " - no routes defined.");
+            throw ("Can't disable routing for event: " + event + " - no route defined for this event.");
         }
     };
 
@@ -129,4 +129,4 @@
     // expose the instance to the global scope
     global.EventRouter = Router;
 
-}(GLOBAL || window));
+}(GLOBAL));

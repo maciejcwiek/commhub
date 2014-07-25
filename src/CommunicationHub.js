@@ -18,24 +18,24 @@
     function log() {
         if (!_options.debug) { return; }
 
-        var temp = arguments;
+        var args = arguments;
 
-        if (typeof temp === 'object') {
+        if (typeof args === 'object') {
             var p = null;
-            temp = [];
+            args = [];
 
             for (p in arguments) {
                 if (arguments.hasOwnProperty(p)) {
-                    temp.push(arguments[p]);
+                    args.push(arguments[p]);
                 }
             }
         }
 
-        temp.reverse();
-        temp.push(_options.logPrefix);
-        temp.reverse();
+        args.reverse();
+        args.push(_options.logPrefix);
+        args.reverse();
 
-        console.log.apply(console, temp);
+        console.log.apply(console, args);
     }
     
     /**
@@ -88,7 +88,7 @@
     EventInterceptor.prototype.interceptEvent = function (data) {
         data = data || false;
 
-        var _self       = this,
+        var self        = this,
             handlerName = this.module.handlers[this.event];
 
         try {
@@ -96,7 +96,7 @@
 
             // use EventRouter to trigger actions assigned to the event. Once that's done, trigger the event handler.
             _router.route(this.event, data, function (alteredData) {
-                _self.module.target[handlerName].call(_self.module.target, _self.event, alteredData || data);
+                self.module.target[handlerName].call(self.module.target, self.event, alteredData || data);
             });
         } catch (err) {
             // most likely EventRouter is not available
@@ -143,7 +143,7 @@
          * Finds an array of event interceptors assigned to the event and triggers iterceptEvent method
          * of all the interceptors from the array.
          * 
-         * @method  invokeInterceptorss
+         * @method  invokeInterceptors
          * @param   {String}    e       Event name.
          * @param   {*}         data    Data to be passed through to recipients.
          */
@@ -162,16 +162,49 @@
         },
 
         /**
+         * Removes one interceptor by its id.
+         * 
+         * @method removeInterceptor
+         * @param  id	Interceptor's id.
+         */
+        removeInterceptor : function (id) {
+            var event = null;
+
+            for (event in this._interceptors) {
+                if (this._interceptors.hasOwnProperty(event)) {
+                    var i = -1;
+
+                    while (this._interceptors[event][++i]) {
+                        var interceptor = this._interceptors[event][i];
+
+                        if (interceptor.id === id) {
+                            try {
+                                delete this._interceptors[event][i];
+                                log('Interceptor removed succesfully.', interceptor.event, interceptor.id);
+                            } catch (err) {
+                                log('Can\'t remove interceptor', err);
+                            }
+                        }
+                    }
+                }
+            }
+        },
+
+        /**
          * Removes all interceptors.
          * 
          * @method removeAllInterceptors
          */
         removeAllInterceptors : function () {
-            var p = null;
+            var event = null;
 
-            for (p in this._interceptors) {
-                if (this._interceptors.hasOwnProperty(p)) {
-                    delete this._interceptors[p];
+            for (event in this._interceptors) {
+                if (this._interceptors.hasOwnProperty(event)) {
+                    try {
+						delete this._interceptors[event];
+                    } catch (err) {
+                        log('Can\'t remove interceptor', err);
+                    }
                 }
             }
         }
@@ -263,7 +296,9 @@
 
         _options.debug = (typeof options.verbose === 'boolean') ? options.verbose : false;
 
-        _router = isRouter(options.eventRouter) ? options.eventRouter : {};
+        if (options.eventRouter) {
+            this.useRouter(options.eventRouter);
+        }
     }
     
     /**
@@ -280,14 +315,40 @@
             e       = null;
 
         module.id = id;
+        module.target.__id = id;
 
-        // go through all handlers and group interceptors by event name
+        // go through all handlers, create event interceptors and group them by event name
         for (e in module.handlers) {
-            _events[e] = _events[e] || [];
-            _events[e].push({
+            _events[e] = _events[e] || {};
+            _events[e] = {
                 module_id       : id,
                 interceptor_id  : interceptorFactory.create(e, module).id
-            });
+            };
+        }
+
+        return true;
+    };
+
+    /**
+     * Deregisters module by event name. Removes associated event interceptors and mid-eiid details.
+     * 
+     * @method deregisterModule
+     * @param   {Object}    params  Expected parameters:
+     *                              - target    A reference to the module.
+     *                              - events 	An array of event names for which event interceptors will be removed.
+     */
+    CommunicationHub.prototype.deregisterModule = function (params) {
+        var events = params.events,
+            mid    = params.target.__id,
+            i      = 0,
+            e      = events[i];
+
+        while (e) {
+            interceptorFactory.removeInterceptor(_events[e].interceptor_id);
+            delete _events[e];
+
+            i += 1;
+            e = events[i];
         }
     };
 
@@ -337,4 +398,4 @@
     // expose the instance to the global scope
     global.CommunicationHub = CommHub;
 
-}(GLOBAL || window));
+}(GLOBAL));
