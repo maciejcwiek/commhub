@@ -11,7 +11,7 @@
 
     /**
      * Custom logging function. Outputs logs if _options.debug is enabled.
-     * 
+     *
      * @function log
      * @private
      */
@@ -37,10 +37,10 @@
 
         console.log.apply(console, args);
     }
-    
+
     /**
      * Returns a unique id generated on a basis of current time stamp + random number and prepended with a custom or default prefix.
-     * 
+     *
      * @function generateUID
      * @param   {Srting} prefix     A string the ID is to be prefixed with. Default: 'uid_'
      * @private
@@ -50,10 +50,10 @@
         prefix = prefix || 'uid_';
         return prefix + '' + (new Date()).getTime() + '' + parseInt(Math.random() * 1000, 0);
     }
-    
+
     /**
      * A utility function, checking whether the object is an instance of EventRouter class.
-     * 
+     *
      * @function isRouter
      * @param   {Object}
      * @private
@@ -66,7 +66,7 @@
     /**
      * EventInterceptor constructor.
      * Interceptors are created in the format interceptor-per-event and they handle one event and one event handler.
-     * 
+     *
      * @class EventInterceptor
      * @param   {String}    event       Name of the event to intercept.
      * @param   {Function}  handler     Event handler.
@@ -81,7 +81,7 @@
     /**
      * A prototype method to be called to capture an event and either call its handler,
      * or forward it to the EventRouter and call a handler once routing is done.
-     * 
+     *
      * @method  interceptEvent
      * @param   {*} data    Data sent along with an event, to be passed to a handler.
      */
@@ -106,17 +106,17 @@
             this.module.target[handlerName].call(this.module.target, this.event, data);
         }
     };
-    
+
     /**
      * A factory to facilitate creating new interceptors and triggering events on them.
-     * 
+     *
      * @mixin interceptorFactory
      */
     var interceptorFactory = {
 
         /**
          * Holds a list of all event interceptors. To be accessed from within the factory only.
-         * 
+         *
          * @type {Object}
          * @name _interceptors
          */
@@ -124,7 +124,7 @@
 
         /**
          * Instantiates a new EventInterceptor and saves the instance in an array of interceptors associated with the same event.
-         * 
+         *
          * @method  create
          * @param   {String}    e           Event name.
          * @param   {Function}  listener    Event listener.
@@ -142,7 +142,7 @@
         /**
          * Finds an array of event interceptors assigned to the event and triggers iterceptEvent method
          * of all the interceptors from the array.
-         * 
+         *
          * @method  invokeInterceptors
          * @param   {String}    e       Event name.
          * @param   {*}         data    Data to be passed through to recipients.
@@ -155,7 +155,7 @@
                 log("No event interceptors found for event:", e);
                 return;
             }
-            
+
             while (eventInterceptors[++i]) {
                 eventInterceptors[i].interceptEvent(data);
             }
@@ -163,7 +163,7 @@
 
         /**
          * Removes one interceptor by its id.
-         * 
+         *
          * @method removeInterceptor
          * @param  id	Interceptor's id.
          */
@@ -192,7 +192,7 @@
 
         /**
          * Removes all interceptors.
-         * 
+         *
          * @method removeAllInterceptors
          */
         removeAllInterceptors : function () {
@@ -212,14 +212,14 @@
 
     /**
      * COMMUNICATION HUB
-     * 
+     *
      * The purpose of the hub is to assure indirect communication between elements of an application, i.e. modules,
      * as well as to tie up actions to certain communication events, for things like capturing data and saving them in a DB,
      * before they are forwarded to event listeners.
      * The idea is to broadcast an event along with some data, then capture the event, forward it to the Event Router, which checks
      * whether there are any actions assigned to it. If actions are found, then they are triggered (for instance saves passed data to a DB),
      * and once the actions have finished, the event is passed along with data, to one or more independent modules, which are listening the event.
-     * 
+     *
      * 1. ModuleA   -->     registers "jump" listener in the hub
      * 2. TheHub    -->     creates an event interceptor for ModuleA and "jump" event
      * 3. ModuleB   -->     triggers "jump" event along with some data
@@ -228,10 +228,10 @@
      * 5. TheHub    -->     once all actions have been triggered and completed, the event is passed back to the interceptor and the interceptor
      *                      executes an event handler of a recipient
      * 6. ModuleA   -->     responds to the "jump" event
-     * 
+     *
      * @example
      *      var CommHub = new CommunicationHub();
-     * 
+     *
      *      function MyModule() {
      *          this.jumpEventHandler(event, data) {
      *              console.log(event); // "jump"
@@ -239,24 +239,24 @@
      *              console.log(data.name); // "Roger"
      *          }
      *      }
-     * 
+     *
      *      var myModule = new MyModule();
-     *      
+     *
      *      CommHub.registerModule({
      *              target: myModule,
      *              handlers: { "jump" : "jumpEventHandler" }
      *          });
-     * 
+     *
      *      CommHub.emit("jump", {animal: "rabbit", name: "Roger"});
-     * 
+     *
      *      // the log output from the listener will be: event: "jump", animal: "rabbit", name: "Roger"
-     * 
+     *
      * @example
      *      // using EventRouter
-     * 
+     *
      *      var Router  = new EventRouter()
      *          CommHub = new CommunicationHub({router: Router});
-     * 
+     *
      *      Router.setRoutes({
      *          "jump" : function (data, done) {
      *              // here you can do with passed data whatever you want
@@ -264,11 +264,11 @@
      *              //      We can append "save" property, which would be a boolean resposne from the DB.save() method,
      *              //      to tell the handler whether passed data has been successfuly saved in a database
      *              data.saved = DB.save(data);
-     * 
+     *
      *              done(data);
      *          }
      *      });
-     * 
+     *
      *      function MyModule() {
      *          this.jumpEventHandler(event, data) {
      *              console.log(event);
@@ -277,18 +277,18 @@
      *              console.log(data.saved);
      *          }
      *      }
-     * 
+     *
      *      var myModule = new MyModule();
-     *      
+     *
      *      CommHub.registerModule({
      *              target: myModule,
      *              handlers: { "jump" : "jumpEventHandler" }
      *          });
-     * 
+     *
      *      CommHub.emit("jump", {animal: "rabbit", name: "Roger"});
-     * 
+     *
      *      // the log output from the listener will be: event: "jump", animal: "mouse", name: "Mickey", saved: true
-     * 
+     *
      * @class   CommunicationHub
      */
     function CommunicationHub(options) {
@@ -300,10 +300,10 @@
             this.useRouter(options.eventRouter);
         }
     }
-    
+
     /**
      * Registers a module listening on events passed through as parameters.
-     * 
+     *
      * @method  registerModule
      * @param   {Object}    params  Expected parameters:
      *                              - target    A reference to the module.
@@ -331,7 +331,7 @@
 
     /**
      * Deregisters module by event name. Removes associated event interceptors and mid-eiid details.
-     * 
+     *
      * @method deregisterModule
      * @param   {Object}    params  Expected parameters:
      *                              - target    A reference to the module.
@@ -354,7 +354,7 @@
 
     /**
      * An alias to interceptorFactory.triggerEvent.
-     * 
+     *
      * @method  emit
      * @param   {String}    e       Event name.
      * @param   {*}         data    Data to be passed through to event hadlers/recipients.
@@ -365,7 +365,7 @@
 
     /**
      * Assigns a router to the hub.
-     * 
+     *
      * @method  useRouter
      * @param   {Object}    router  An instance of EventRouter class.
      */
@@ -376,10 +376,10 @@
             throw ('Argument is not an instance of EventRouter class.');
         }
     };
-    
+
     /**
      * Resets the hub to it's initial state.
-     * 
+     *
      * @method  reset
      */
     CommunicationHub.prototype.reset = function () {
@@ -391,11 +391,16 @@
 
     // ensures singleton; to be published as CommunicationHub - DO WE NEED A SINGLETON??
     function CommHub(opts) {
-        _instance = _instance instanceof CommunicationHub ? _instance : new CommunicationHub(opts); 
+        _instance = _instance instanceof CommunicationHub ? _instance : new CommunicationHub(opts);
         return _instance;
     }
 
     // expose the instance to the global scope
     global.CommunicationHub = CommHub;
 
-}(GLOBAL));
+}(
+    (function () {
+        if (typeof GLOBAL != 'undefined') return GLOBAL;
+        return window;
+    })()
+));
