@@ -1,2 +1,4 @@
 .DS_Store
-spec/reports
+.codio
+spec/reports/
+node_modules/
