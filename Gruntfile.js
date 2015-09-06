@@ -12,7 +12,7 @@ module.exports = function(grunt) {
         },
         jsdoc: {
             dist : {
-                src: ['src/*.js'], 
+                src: ['src/*.js'],
                 options: {
                     destination: 'docs'
                 }
@@ -36,13 +36,7 @@ module.exports = function(grunt) {
 			    matchall: false,
       			extensions: 'js',
       			specNameMatcher: 'spec',
-                helperNameMatcher: 'helper',
-	            jUnit: {
-    	            report: true,
-        			savePath : "spec/reports/",
-        			useDotNotation: true,
-        			consolidate: true
-            	}
+                helperNameMatcher: 'helper'
             },
             all: ['spec/']
         },
@@ -56,22 +50,22 @@ module.exports = function(grunt) {
             }
         }
 	};
-    
+
 	// Project configuration.
 	grunt.initConfig(cfg);
 
 	// Load the plugin that provides the "uglify" task.
 	grunt.loadNpmTasks('grunt-contrib-uglify');
-    
+
     // load jshint plugin
     grunt.loadNpmTasks('grunt-contrib-jshint');
 
 	// load jasmine plugin
     grunt.loadNpmTasks('grunt-jasmine-node');
-    
+
     // load watch plugin
     grunt.loadNpmTasks('grunt-contrib-watch');
-    
+
     // load jsdoc documenting plugin
     // grunt.loadNpmTasks('grunt-jsdoc');
 
